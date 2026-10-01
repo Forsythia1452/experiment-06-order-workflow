@@ -1,0 +1,7 @@
+node_modules/
+data/*.db
+data/node-red/
+*.log
+.env
+.runtime/
+
