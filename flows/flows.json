@@ -6,7 +6,7 @@
 
   {"id":"page-in","type":"http in","z":"tab1","name":"GET orders page","url":"/orders","method":"get","upload":false,"swaggerDoc":"","x":130,"y":130,"wires":[["page-file"]]},
   {"id":"page-file","type":"file in","z":"tab1","name":"读取操作页面","filename":"web/orders.html","filenameType":"str","format":"utf8","chunk":false,"sendError":false,"encoding":"none","allProps":false,"x":340,"y":130,"wires":[["page-header"]]},
-  {"id":"page-header","type":"function","z":"tab1","name":"HTML 响应头","func":"msg.headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store'};return msg;","outputs":1,"x":550,"y":130,"wires":[["page-out"]]},
+  {"id":"page-header","type":"function","z":"tab1","name":"HTML 响应头","func":"msg.headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-frame-options':'DENY','x-content-type-options':'nosniff','content-security-policy':\"default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'\"};return msg;","outputs":1,"x":550,"y":130,"wires":[["page-out"]]},
   {"id":"page-out","type":"http response","z":"tab1","name":"页面响应","statusCode":"200","headers":{},"x":750,"y":130,"wires":[]},
 
   {"id":"order-in","type":"http in","z":"tab1","name":"POST order","url":"/api/orders","method":"post","upload":false,"swaggerDoc":"","x":120,"y":220,"wires":[["validate"]]},

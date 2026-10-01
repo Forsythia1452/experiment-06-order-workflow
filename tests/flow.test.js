@@ -10,4 +10,5 @@ test('has inventory HTTP integration',()=>assert.ok(flows.some(x=>x.type==='http
 test('has catch path',()=>assert.ok(flows.some(x=>x.type==='catch')));
 test('all HTTP inputs lead to wires',()=>assert.ok(flows.filter(x=>x.type==='http in').every(x=>x.wires.flat().length===1)));
 test('all responses have no output wires',()=>assert.ok(flows.filter(x=>x.type==='http response').every(x=>x.wires.length===0)));
+test('orders page sends hardened response headers',()=>{const n=flows.find(x=>x.id==='page-header');assert.match(n.func,/x-frame-options/);assert.match(n.func,/content-security-policy/);assert.match(n.func,/nosniff/)});
 
