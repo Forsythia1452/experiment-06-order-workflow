@@ -1,0 +1,6 @@
+[
+  {"id":"h1","type":"http in","z":"base","name":"健康检查","url":"/health","method":"get","upload":false,"swaggerDoc":"","x":130,"y":80,"wires":[["h2"]]},
+  {"id":"h2","type":"function","z":"base","name":"健康响应","func":"msg.payload={status:'ok',service:'workflow'};return msg;","outputs":1,"x":330,"y":80,"wires":[["h3"]]},
+  {"id":"h3","type":"http response","z":"base","name":"HTTP Response","statusCode":"200","headers":{},"x":540,"y":80,"wires":[]}
+]
+

@@ -1,0 +1,29 @@
+[
+  {"id":"tab1","type":"tab","label":"订单工作流","disabled":false,"info":"Node-RED 只负责编排；库存和预留由独立服务拥有。"},
+  {"id":"health-in","type":"http in","z":"tab1","name":"GET health","url":"/health","method":"get","upload":false,"swaggerDoc":"","x":120,"y":60,"wires":[["health-fn"]]},
+  {"id":"health-fn","type":"function","z":"tab1","name":"工作流健康","func":"msg.payload={status:'ok',service:'workflow'};return msg;","outputs":1,"x":330,"y":60,"wires":[["health-out"]]},
+  {"id":"health-out","type":"http response","z":"tab1","name":"响应","statusCode":"200","headers":{"content-type":"application/json; charset=utf-8"},"x":550,"y":60,"wires":[]},
+
+  {"id":"page-in","type":"http in","z":"tab1","name":"GET orders page","url":"/orders","method":"get","upload":false,"swaggerDoc":"","x":130,"y":130,"wires":[["page-file"]]},
+  {"id":"page-file","type":"file in","z":"tab1","name":"读取操作页面","filename":"web/orders.html","filenameType":"str","format":"utf8","chunk":false,"sendError":false,"encoding":"none","allProps":false,"x":340,"y":130,"wires":[["page-header"]]},
+  {"id":"page-header","type":"function","z":"tab1","name":"HTML 响应头","func":"msg.headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store'};return msg;","outputs":1,"x":550,"y":130,"wires":[["page-out"]]},
+  {"id":"page-out","type":"http response","z":"tab1","name":"页面响应","statusCode":"200","headers":{},"x":750,"y":130,"wires":[]},
+
+  {"id":"order-in","type":"http in","z":"tab1","name":"POST order","url":"/api/orders","method":"post","upload":false,"swaggerDoc":"","x":120,"y":220,"wires":[["validate"]]},
+  {"id":"validate","type":"function","z":"tab1","name":"校验并保存消息","func":"const p=msg.payload||{};const keys=Object.keys(p);if(keys.some(k=>!['request_id','sku','quantity'].includes(k))||!Number.isInteger(p.quantity)||p.quantity<=0||!/^[A-Za-z0-9-]{6,40}$/.test(String(p.request_id||''))||!/^[A-Za-z0-9_-]{2,24}$/.test(String(p.sku||''))){msg.statusCode=400;msg.payload={error:'invalid_order'};return [null,msg];}msg.order={request_id:p.request_id,sku:String(p.sku).toUpperCase(),quantity:p.quantity};msg.payload=msg.order;msg.method='POST';msg.url='http://127.0.0.1:8001/reserve';msg.headers={'content-type':'application/json'};return [msg,null];","outputs":2,"x":340,"y":220,"wires":[["reserve-http"],["order-out"]]},
+  {"id":"reserve-http","type":"http request","z":"tab1","name":"调用库存服务","method":"use","ret":"obj","paytoqs":"ignore","url":"","persist":false,"authType":"","senderr":true,"headers":[],"x":560,"y":200,"wires":[["classify"]]},
+  {"id":"classify","type":"function","z":"tab1","name":"分类业务和依赖结果","func":"if(!msg.statusCode){msg.statusCode=502;msg.payload={error:'inventory_unavailable'};}else if(msg.statusCode>=500){msg.statusCode=502;msg.payload={error:'inventory_dependency_error'};}return msg;","outputs":1,"x":790,"y":200,"wires":[["order-out"]]},
+  {"id":"order-out","type":"http response","z":"tab1","name":"订单响应","statusCode":"","headers":{},"x":1010,"y":220,"wires":[]},
+  {"id":"catch","type":"catch","z":"tab1","name":"捕获调用异常","scope":["reserve-http"],"uncaught":false,"x":570,"y":270,"wires":[["catch-fn"]]},
+  {"id":"catch-fn","type":"function","z":"tab1","name":"依赖异常脱敏","func":"msg.statusCode=502;msg.payload={error:'inventory_unavailable',request_id:msg.order&&msg.order.request_id};return msg;","outputs":1,"x":790,"y":270,"wires":[["order-out"]]},
+
+  {"id":"products-in","type":"http in","z":"tab1","name":"GET products","url":"/api/products","method":"get","upload":false,"swaggerDoc":"","x":120,"y":350,"wires":[["products-set"]]},
+  {"id":"products-set","type":"function","z":"tab1","name":"商品服务地址","func":"msg.method='GET';msg.url='http://127.0.0.1:8001/products';return msg;","outputs":1,"x":340,"y":350,"wires":[["query-http"]]},
+  {"id":"orders-in","type":"http in","z":"tab1","name":"GET orders","url":"/api/orders","method":"get","upload":false,"swaggerDoc":"","x":120,"y":400,"wires":[["orders-set"]]},
+  {"id":"orders-set","type":"function","z":"tab1","name":"记录查询地址","func":"const s=msg.req.query.status;msg.method='GET';msg.url='http://127.0.0.1:8001/reservations'+(s?'?status='+encodeURIComponent(s):'');return msg;","outputs":1,"x":340,"y":400,"wires":[["query-http"]]},
+  {"id":"detail-in","type":"http in","z":"tab1","name":"GET order detail","url":"/api/orders/:id","method":"get","upload":false,"swaggerDoc":"","x":130,"y":450,"wires":[["detail-set"]]},
+  {"id":"detail-set","type":"function","z":"tab1","name":"详情查询地址","func":"msg.method='GET';msg.url='http://127.0.0.1:8001/reservations/'+encodeURIComponent(msg.req.params.id);return msg;","outputs":1,"x":340,"y":450,"wires":[["query-http"]]},
+  {"id":"query-http","type":"http request","z":"tab1","name":"调用查询服务","method":"use","ret":"obj","paytoqs":"ignore","url":"","persist":false,"authType":"","senderr":true,"headers":[],"x":570,"y":400,"wires":[["query-out"]]},
+  {"id":"query-out","type":"http response","z":"tab1","name":"查询响应","statusCode":"","headers":{},"x":790,"y":400,"wires":[]}
+]
+
